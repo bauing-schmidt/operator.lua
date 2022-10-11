@@ -255,14 +255,14 @@ local RECIP_BPF = 2 ^ (-BPF)
 
 function math.random_normal (mu, sigma)
 
-	local random, z = math.random, nil
+	local random, log, z = math.random, math.log, nil
 
     while true do
 		local u1 = random()
 		local u2 = 1.0 - random()
 		z = NV_MAGICCONST * (u1 - 0.5) / u2
 		local zz = z * z / 4.0
-		if zz <= -math.log(u2) then break end
+		if zz <= -log(u2) then break end
 	end
 
 	return mu + z * sigma
