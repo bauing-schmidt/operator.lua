@@ -2,9 +2,16 @@
 local op = {}
 
 function op.identity(...) return ... end
-function op.eternity(...) return op.eternity(...) end	-- via tail-recursion.
-function op.noop(...) end
-function op.forever(f, ...) while true do f(...) end end
+function op.K (a) return function () return a end end
+function op.S (x) return function (y) return function (...) return x (...) (y (...)) end end end
+function op.eternity() return op.eternity() end	-- via tail-recursion.
+function op.noop() end
+function op.pack_unpack (f) return op.o { table.pack, f, table.unpack } end
+function op.forever(f, ...)
+	local _f_ = op.pack_unpack (f)
+	local v = table.pack(...)
+	while true do v = _f_ (v) end
+end
 function op.precv (f, g) return function (s, ...) if s then return f(...) else return g(...) end end end
 function op.add(a, b) return a + b end
 function op.eq(a, b) return a == b end
