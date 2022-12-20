@@ -9,7 +9,7 @@ function op.eternity(...)
 	return op.eternity(...)	-- infinite recursion
 end
 
-function op.noop()
+function op.noop(...)
 	-- simply do nothing
 end
 
@@ -44,6 +44,26 @@ end
 
 function op.increment(a)
 	return op.add(a, 1)
+end
+
+function op.apply (f, ...) return f(...) end
+
+function op.o (funcs)
+
+	return function (...) return table.foldr (funcs, op.apply, ...) end
+
+	--[[
+	return function (init)
+
+		for i = #funcs, 1, -1 do
+
+			local f = funcs[i]
+			init = table.pack (f (table.unpack (init)))
+		end
+		return table.unpack (init)
+	end
+	]]
+
 end
 
 --------------------------------------------------------------------------------
@@ -141,11 +161,10 @@ function table.contains(tbl, elt)
 	return tbl[elt] ~= nil
 end
 
-function table.foldr (tbl, f, init)
-	for i = #tbl, 1, -1 do
-		init = f(tbl[i], init)
-	end
-	return init
+function table.foldr (tbl, f, ...)
+	local init = table.pack (...)
+	for i = #tbl, 1, -1 do init = table.pack(f(tbl[i], table.unpack (init))) end
+	return table.unpack(init)
 end
 
 function table.map (tbl, f)
