@@ -28,11 +28,10 @@ function op.call_pre_post (pre, f, post)
 		return table.unpack (ret)
 	end
 end
-
 function op.pcall_pre_post (pre, f, post)
-	return op.call_pre_post (pre, function (...) return pcall (f, ...) end, post end, post)
+	return op.call_pre_post (pre, function (...) return pcall (f, ...) end, post)
 end
-
+function op.string_format (str) return function (...) return string.format (str, ...) end end
 
 --------------------------------------------------------------------------------
 
