@@ -20,6 +20,19 @@ function op.le(a, b) return a <= b end
 function op.increment(a) return op.add(a, 1) end
 function op.apply (f, ...) return f(...) end
 function op.o (funcs) return function (...) return table.foldr (funcs, op.apply, ...) end end
+function op.call_pre_post (pre, f, post)
+	return function (...)
+		local tbl = table.pack (pre (...))
+		local ret = table.pack (f (table.unpack (tbl)))
+		post (table.unpack (tbl))
+		return table.unpack (ret)
+	end
+end
+
+function op.pcall_pre_post (pre, f, post)
+	return op.call_pre_post (pre, function (...) return pcall (f, ...) end, post end, post)
+end
+
 
 --------------------------------------------------------------------------------
 
