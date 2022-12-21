@@ -140,6 +140,14 @@ function table.map (tbl, f)
 	return mapped
 end
 
+function table.unpack_named (names_tbl)
+	return function (values_tbl)
+		local tbl = {}
+		for i, name in ipairs (names_tbl) do tbl[i] = values_tbl[name] end
+		return table.unpack (tbl)
+	end
+end
+
 function math.random_uniform(a, b)
 	a = a or 0
 	b = b or 1
