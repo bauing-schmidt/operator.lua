@@ -2,7 +2,7 @@
 local op = {}
 
 function op.identity(...) return ... end
-function op.K (a) return function () return a end end
+function op.K (v) return function () return v end end
 function op.S (x) return function (y) return function (...) return x (...) (y (...)) end end end
 function op.eternity() return op.eternity() end	-- via tail-recursion.
 function op.noop() end
