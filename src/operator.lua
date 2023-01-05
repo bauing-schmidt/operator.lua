@@ -49,6 +49,10 @@ function op.without_gc_do (f, h, ...)
 
 	return R (pcall (f, ...))
 end
+function op.assert_equals (expected, msg)
+	return function (a) return assert (a == expected, msg) end 
+end
+function op.assert_true (msg) return op.assert_equals (true, msg) end
 
 --------------------------------------------------------------------------------
 
