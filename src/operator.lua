@@ -32,6 +32,23 @@ function op.pcall_pre_post (pre, f, post)
 	return op.call_pre_post (pre, function (...) return pcall (f, ...) end, post)
 end
 function op.string_format (str) return function (...) return string.format (str, ...) end end
+function op.fromtodo (from, to, step)
+	step = step or 1
+	return function (f) for i = from, to, step do f(i) end end 
+end
+function op.without_gc_do (f, h, ...)
+
+	h = h or error
+
+	local function R (s, ...)
+		collectgarbage 'restart'
+		if s then return ... else return h (...) end
+	end
+
+	collectgarbage 'stop'
+
+	return R (pcall (f, ...))
+end
 
 --------------------------------------------------------------------------------
 
