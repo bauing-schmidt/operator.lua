@@ -12,7 +12,15 @@ function op.forever(f, ...)
 	local v = table.pack(...)
 	while true do v = _f_ (v) end
 end
-function op.precv (f, g) return function (s, ...) if s then return f(...) else return g(...) end end end
+function op.precv (f, g) 
+	return function (s, ...) if s then return f(...) else return g(...) end end 
+end
+function op.precv_before (f, g) 
+	return function (...)
+		f () 
+		return op.precv (op.identity, g) (...)
+	end 
+end
 function op.add(a, b) return a + b end
 function op.eq(a, b) return a == b end
 function op.lt(a, b) return a < b end
@@ -36,18 +44,24 @@ function op.fromtodo (from, to, step)
 	step = step or 1
 	return function (f) for i = from, to, step do f(i) end end 
 end
-function op.without_gc_do (f, h, ...)
+function op.without_gc_do (f, h)
 
 	h = h or error
 
-	local function R (s, ...)
-		collectgarbage 'restart'
-		if s then return ... else return h (...) end
+	return function (...)
+
+		local function R (s, ...)
+			collectgarbage 'restart'
+			if s then return ... else return h (...) end
+		end
+
+		collectgarbage 'stop'
+
+		return R (pcall (f, ...))
 	end
-
-	collectgarbage 'stop'
-
-	return R (pcall (f, ...))
+end
+function op.ellipses_append (v)
+	return function (...) return v, ... end
 end
 function op.assert_equals (expected, msg)
 	return function (a) return assert (a == expected, msg) end 
