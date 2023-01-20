@@ -44,7 +44,7 @@ function op.fromtodo (from, to, step)
 	step = step or 1
 	return function (f) for i = from, to, step do f(i) end end 
 end
-function op.without_gc_do (f, h)
+function op.without_gc (f, h)
 
 	h = h or error
 
