@@ -68,6 +68,17 @@ function op.assert_equals (expected, msg)
 end
 function op.assert_true (msg) return op.assert_equals (true, msg) end
 
+function op.memoize (f)
+	local computed, result_tbl = false, {}
+	return function (...)
+		if not computed then
+			result_tbl = table.pack(f (...))
+			computed = true
+		end
+		return table.unpack (result_tbl)
+	end
+end
+
 --------------------------------------------------------------------------------
 
 function coroutine.const(f)
