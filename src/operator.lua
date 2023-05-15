@@ -79,6 +79,18 @@ function op.memoize (f)
 	end
 end
 
+function op.with_elapsed_time_do (f, ...)
+
+	local start = os.clock ()
+
+	local v = table.pack(f (...))
+
+	local elapsed = os.clock () - start
+
+	return elapsed, table.unpack (v)
+
+end
+
 --------------------------------------------------------------------------------
 
 function coroutine.const(f)
