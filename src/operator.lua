@@ -198,6 +198,19 @@ function table.map (tbl, f)
 	return mapped
 end
 
+function table.scan (tbl, f, init)
+
+	local scanned = {init}
+
+	for k, v in ipairs (tbl) do
+		init = f (init, v, k)
+		table.insert (scanned, init)
+	end
+
+	return scanned
+
+end
+
 function table.unpack_named (names_tbl)
 	return function (values_tbl)
 		local tbl = {}
