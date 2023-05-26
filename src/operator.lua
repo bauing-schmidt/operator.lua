@@ -40,6 +40,8 @@ function op.pcall_pre_post (pre, f, post)
 	return op.call_pre_post (pre, function (...) return pcall (f, ...) end, post)
 end
 function op.string_format (str) return function (...) return string.format (str, ...) end end
+function op.print_table (tbl) for k, v in pairs (tbl) do print (k, v) end end
+function op.table_insert (tbl) return function (...) return table.insert (tbl, ...) end end
 function op.fromtodo (from, to, step)
 	step = step or 1
 	return function (f) for i = from, to, step do f(i) end end 
