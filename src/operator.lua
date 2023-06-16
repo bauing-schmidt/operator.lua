@@ -96,6 +96,25 @@ end
 
 function op.add_trait (tbl, trait)
 
+	--[[
+
+	local b = {}
+
+	setmetatable (b, {
+		__index = { hello = 'world'}
+	})
+
+
+	local a = {}
+
+	setmetatable (a, {
+		__index = b
+	})
+
+	print (a.hello)
+
+	]]
+
 	local mt = getmetatable (tbl)
 
 	if not mt then
