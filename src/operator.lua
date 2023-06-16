@@ -93,6 +93,44 @@ function op.with_elapsed_time_do (f, ...)
 
 end
 
+
+function op.add_trait (tbl, trait)
+
+	local mt = getmetatable (tbl)
+
+	if not mt then
+		mt = {}
+		setmetatable (tbl, mt)
+	end
+
+	local __index = mt.__index
+
+	local f
+
+	if __index then
+
+		local g = __index
+
+		if type (g) == 'table' then
+			g = function (t, key) return __index[key] end
+		end
+
+		if type (trait) == 'table' then
+			f = function (t, key) return trait[key] or g (t, key) end
+		else
+			f = function (t, key) return trait (t, key) or g (t, key) end
+		end
+
+	else 
+		f = trait
+	end
+
+	mt.__index = f
+
+	return tbl
+
+end
+
 --------------------------------------------------------------------------------
 
 function coroutine.const(f)
