@@ -1,7 +1,6 @@
 
 local op = require 'operator'
 
-
 local stream_mt = {}
 
 local empty_stream = {}
@@ -18,9 +17,10 @@ local function cons (h, t)
     return S
 end
 
+stream_mt.__add = function (S, R) return cons (S.head, function () return R + S:tail () end) end
+
 stream_mt.__index = {
 
-    cdr = function (S) return S.tail () end,
     totable = function (S) 
 
         local tbl = {}
@@ -28,7 +28,7 @@ stream_mt.__index = {
         while not isempty (S) do
 
             table.insert (tbl, S.head)
-            S = S:cdr ()
+            S = S:tail ()
 
         end
 
@@ -47,19 +47,23 @@ stream_mt.__index = {
                          end) 
         end
     end,
-    map = function (S, f)
+    map = function (S, f) return cons (f (S.head), function () return S:tail ():map (f) end) end,
+    zip = function (S, R, f) return cons (f (S.head, R.head), function () return S:tail ():zip (R:tail (), f) end) end,
+    at = function (S, i)
 
-        return cons (f (S.head), function () return S:cdr ():map (f) end)
-    
+        while i > 1 do 
+            S = S:tail ()
+            i = i - 1
+        end
+
+        return S.head
     end,
-    zip = function (S, R, f)
-
-        return cons (f (S.head, R.head), function () return S:cdr ():zip (R:cdr (), f) end)
-    
-    end
 
 }
 
+local function iterate (f, v)
+    return cons (v, function () return iterate (f, f (v)) end)
+end
 
 local function constant (v)
 
@@ -69,20 +73,15 @@ local function constant (v)
 
 end
 
-local function from (v, by)
-
-    return cons (v, function () return from (v + by, by) end)
-
-end
-
+local function from (v, by) return cons (v, function () return from (v + by, by) end) end
 
 local ones = constant (1)
 
 local fibs
-fibs = cons (0, function () return cons (1, function () return fibs:zip (fibs:cdr (), function (a, b) return a + b end)   end) end)
+fibs = cons (0, function () return cons (1, function () return fibs:zip (fibs:tail (), function (a, b) return a + b end) end) end)
 
 print (ones.head)
-print (ones:cdr ().head)
+print (ones:tail ().head)
 
 local tbl = ones:take (10):totable ()
 
@@ -91,10 +90,16 @@ op.print_table (tbl)
 local S = from (4, -1):map (function (v) if v == 0 then error 'cannot divide by 0' else return 1 / v end end):take (4)
 
 print (S.head)
-print (S:cdr ().head)
-print (S:cdr ():cdr ().head)
-print (S:cdr ():cdr ():cdr ().head)
+print (S:tail ().head)
+print (S:tail ():tail ().head)
+print (S:tail ():tail ():tail ().head)
+print (S:at (4))
 
 op.print_table (S:totable ())
 
 op.print_table (fibs:take(30):totable ())
+
+print (fibs:at (30))
+
+local nats = iterate (function (v) return v + 1 end, 0)
+op.print_table (nats:take(30):totable ())
