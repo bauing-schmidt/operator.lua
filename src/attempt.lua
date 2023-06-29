@@ -17,7 +17,7 @@ local function cons (h, t)
     return S
 end
 
-stream_mt.__add = function (S, R) return cons (S.head, function () return R + S:tail () end) end
+stream_mt.__add = function (S, R) return cons (S.head, function () return R + S.tail () end) end
 
 stream_mt.__index = {
 
@@ -28,7 +28,7 @@ stream_mt.__index = {
         while not isempty (S) do
 
             table.insert (tbl, S.head)
-            S = S:tail ()
+            S = S.tail ()
 
         end
 
@@ -47,18 +47,23 @@ stream_mt.__index = {
                          end) 
         end
     end,
-    map = function (S, f) return cons (f (S.head), function () return S:tail ():map (f) end) end,
-    zip = function (S, R, f) return cons (f (S.head, R.head), function () return S:tail ():zip (R:tail (), f) end) end,
+    map = function (S, f) return cons (f (S.head), function () return S.tail ():map (f) end) end,
+    zip = function (S, R, f) return cons (f (S.head, R.head), function () return S.tail ():zip (R.tail (), f) end) end,
     at = function (S, i)
 
         while i > 1 do 
-            S = S:tail ()
+            S = S.tail ()
             i = i - 1
         end
 
         return S.head
     end,
+    filter = function (S, p)
+        local v = S.head
+        if p (v) then return cons (v, function () return S.tail ():filter (p) end)
+        else return S.tail ():filter (p) end
 
+    end
 }
 
 local function iterate (f, v)
@@ -78,10 +83,10 @@ local function from (v, by) return cons (v, function () return from (v + by, by)
 local ones = constant (1)
 
 local fibs
-fibs = cons (0, function () return cons (1, function () return fibs:zip (fibs:tail (), function (a, b) return a + b end) end) end)
+fibs = cons (0, function () return cons (1, function () return fibs:zip (fibs.tail (), function (a, b) return a + b end) end) end)
 
 print (ones.head)
-print (ones:tail ().head)
+print (ones.tail ().head)
 
 local tbl = ones:take (10):totable ()
 
@@ -90,9 +95,9 @@ op.print_table (tbl)
 local S = from (4, -1):map (function (v) if v == 0 then error 'cannot divide by 0' else return 1 / v end end):take (4)
 
 print (S.head)
-print (S:tail ().head)
-print (S:tail ():tail ().head)
-print (S:tail ():tail ():tail ().head)
+print (S.tail ().head)
+print (S.tail ().tail ().head)
+print (S.tail ().tail ().tail ().head)
 print (S:at (4))
 
 op.print_table (S:totable ())
@@ -103,3 +108,18 @@ print (fibs:at (30))
 
 local nats = iterate (function (v) return v + 1 end, 0)
 op.print_table (nats:take(30):totable ())
+
+
+local function P (S)
+
+   
+    local p = S.head
+    
+    local function isntmultiple (n) return n % p > 0 end
+
+    return cons (p, function () return P (S.tail ():filter (isntmultiple)) end)
+end
+
+local primes = P (from (2, 1))
+
+op.print_table (primes:take(500):totable ())
