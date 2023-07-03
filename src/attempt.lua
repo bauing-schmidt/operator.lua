@@ -2,22 +2,29 @@
 local op = require 'operator'
 
 local stream_mt = {}
+local stream_cons_mt = {}
 
 local empty_stream = {}
 
 local function isempty (S) return S == empty_stream end
 
-local function cons (h, t)
+--[[
 
-    if t ~= empty_stream then t = op.memoize (t) end
+    data Stream a = Nil | Cons () -> (a, Stream a)
+    data Stream a = Nil | Cons a (Stream a) | Susp (() -> Stream a)
 
-    local S = { head = h, tail = t }
+]]
+
+
+local function cons (t)
+
+    local S = { promise = op.memoize (t) }
     setmetatable (S, stream_mt)
 
     return S
 end
 
-stream_mt.__add = function (S, R) return cons (S.head, function () return R + S.tail () end) end
+stream_mt.__call = function (S) return S.promise () end
 
 stream_mt.__index = {
 
@@ -25,11 +32,13 @@ stream_mt.__index = {
 
         local tbl = {}
 
-        while not isempty (S) do
+        local v, R = nil, S
 
-            table.insert (tbl, S.head)
-            S = S.tail ()
+        while not isempty (R) do
 
+            v, R = R ()
+            table.insert (tbl, v)
+            
         end
 
         return tbl
@@ -39,66 +48,71 @@ stream_mt.__index = {
         if n == 0 then 
             return empty_stream 
         else 
-            return cons (S.head, 
-                         function () 
-                            local m = n - 1
-                            if m == 0 then return empty_stream 
-                            else return S.tail ():take (m) end
+            return cons (function () 
+                            local v, R = S ()
+                            return v, R:take (n - 1)
                          end) 
         end
     end,
-    map = function (S, f) return cons (f (S.head), function () return S.tail ():map (f) end) end,
-    zip = function (S, R, f) return cons (f (S.head, R.head), function () return S.tail ():zip (R.tail (), f) end) end,
+    map = function (S, f) return cons (function () local v, R = S (); return f (v), R:map (f) end) end,
+    zip = function (S, R, f) return cons (function () local s, SS = S (); local r, RR = R (); return f(s, r), SS:zip (RR, f) end) end,
     at = function (S, i)
 
-        while i > 1 do 
-            S = S.tail ()
+        local s, R = nil, S
+        while i > 0 do 
+            s, R = R ()
             i = i - 1
         end
 
-        return S.head
+        return s
     end,
     filter = function (S, p)
-        local v = S.head
-        if p (v) then return cons (v, function () return S.tail ():filter (p) end)
-        else return S.tail ():filter (p) end
+        -- filter :: Stream a -> (a -> boolean) -> Stream a
+        local r, R = S()
+        if p (r) then return cons (function () return r, R:filter (p) end)
+        else return R:filter (p) end
 
+        
     end
 }
 
 local function iterate (f, v)
-    return cons (v, function () return iterate (f, f (v)) end)
+    return cons (function () return v, iterate (f, f (v)) end)
 end
 
 local function constant (v)
 
     local vs
-    vs = cons (v, function () return vs end)
+    vs = cons (function () return v, vs end)
     return vs
 
 end
 
-local function from (v, by) return cons (v, function () return from (v + by, by) end) end
+local function from (v, by) return cons (function () return v, from (v + by, by) end) end
 
 local ones = constant (1)
 
 local fibs
-fibs = cons (0, function () return cons (1, function () return fibs:zip (fibs.tail (), function (a, b) return a + b end) end) end)
+fibs = cons (function () return 0, cons (function () local _, F = fibs (); return 1, fibs:zip (F, function (a, b) return a + b end) end) end)
 
-print (ones.head)
-print (ones.tail ().head)
+-- print (ones.head)
+-- print (ones.tail ().head)
 
 local tbl = ones:take (10):totable ()
 
 op.print_table (tbl)
 
+local tbl = fibs:take (10):totable ()
+
+op.print_table (tbl)
+
 local S = from (4, -1):map (function (v) if v == 0 then error 'cannot divide by 0' else return 1 / v end end):take (4)
 
-print (S.head)
-print (S.tail ().head)
-print (S.tail ().tail ().head)
-print (S.tail ().tail ().tail ().head)
-print (S:at (4))
+-- print (S.head)
+-- print (S.tail ().head)
+-- print (S.tail ().tail ().head)
+-- print (S.tail ().tail ().tail ().head)
+-- print (S:at (4))
 
 op.print_table (S:totable ())
 
@@ -113,11 +127,11 @@ op.print_table (nats:take(30):totable ())
 local function P (S)
 
    
-    local p = S.head
+    local p, R = S ()
     
     local function isntmultiple (n) return n % p > 0 end
 
-    return cons (p, function () return P (S.tail ():filter (isntmultiple)) end)
+    return cons (function () return p, P (R:filter (isntmultiple)) end)
 end
 
 local primes = P (from (2, 1))
