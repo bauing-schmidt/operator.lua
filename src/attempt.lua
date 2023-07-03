@@ -11,7 +11,6 @@ local function isempty (S) return S == empty_stream end
 --[[
 
     data Stream a = Nil | Cons () -> (a, Stream a)
-    data Stream a = Nil | Cons a (Stream a) | Susp (() -> Stream a)
 
 ]]
 
