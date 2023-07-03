@@ -31,7 +31,7 @@ local function cons (t)
     return S
 end
 
-stream_mt.__call = function (S) return S.promise () end
+stream_mt.__call = function (S) return S.promise (S) end
 
 stream_mt.__index = {
 
@@ -88,6 +88,8 @@ end
 
 local function from (v, by) return cons (function () return v, from (v + by, by) end) end
 
+local C = os.clock ()
+
 local ones = constant (1)
 
 local fibs
@@ -117,7 +119,6 @@ op.print_table (S:totable {})
 op.print_table (fibs:take(30):totable {})
 
 print (fibs:at (30))
-print (fibs:at (40))
 
 local nats = iterate (function (v) return v + 1 end, 0)
 op.print_table (nats:take(30):totable {})
@@ -136,3 +137,5 @@ end
 local primes = P (from (2, 1))
 
 op.print_table (primes:take(500):totable {})
+
+print ('seconds: ', os.clock () - C)

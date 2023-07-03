@@ -22,6 +22,8 @@ function op.precv_before (f, g)
 	end 
 end
 function op.add(a, b) return a + b end
+function op.add_l(a) return function (b) return a + b end end
+function op.add_r(b) return function (a) return a + b end end
 function op.eq(a, b) return a == b end
 function op.lt(a, b) return a < b end
 function op.le(a, b) return a <= b end
