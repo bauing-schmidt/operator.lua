@@ -6,6 +6,14 @@ local stream_cons_mt = {}
 
 local empty_stream = {}
 
+setmetatable (empty_stream, {
+
+    __index = {
+        totable = function (S, tbl) return tbl end,
+    }
+
+})
+
 local function isempty (S) return S == empty_stream end
 
 --[[
@@ -27,20 +35,11 @@ stream_mt.__call = function (S) return S.promise () end
 
 stream_mt.__index = {
 
-    totable = function (S) 
+    totable = function (S, tbl)
 
-        local tbl = {}
-
-        local v, R = nil, S
-
-        while not isempty (R) do
-
-            v, R = R ()
-            table.insert (tbl, v)
-            
-        end
-
-        return tbl
+        local v, R = S ()
+        table.insert (tbl, v)
+        return R:totable (tbl)
     end,
     take = function (S, n)
 
@@ -92,16 +91,16 @@ local function from (v, by) return cons (function () return v, from (v + by, by)
 local ones = constant (1)
 
 local fibs
-fibs = cons (function () return 0, cons (function () local _, F = fibs (); return 1, fibs:zip (F, function (a, b) return a + b end) end) end)
+fibs = cons (function () return 0, cons (function () local zero, F = fibs (); return zero + 1, fibs:zip (F, function (a, b) return a + b end) end) end)
 
 -- print (ones.head)
 -- print (ones.tail ().head)
 
-local tbl = ones:take (10):totable ()
+local tbl = ones:take (10):totable {}
 
 op.print_table (tbl)
 
-local tbl = fibs:take (10):totable ()
+local tbl = fibs:take (10):totable {}
 
 op.print_table (tbl)
 
@@ -111,16 +110,17 @@ local S = from (4, -1):map (function (v) if v == 0 then error 'cannot divide by 
 -- print (S.tail ().head)
 -- print (S.tail ().tail ().head)
 -- print (S.tail ().tail ().tail ().head)
--- print (S:at (4))
+print (S:at (4))
 
-op.print_table (S:totable ())
+op.print_table (S:totable {})
 
-op.print_table (fibs:take(30):totable ())
+op.print_table (fibs:take(30):totable {})
 
 print (fibs:at (30))
+print (fibs:at (40))
 
 local nats = iterate (function (v) return v + 1 end, 0)
-op.print_table (nats:take(30):totable ())
+op.print_table (nats:take(30):totable {})
 
 
 local function P (S)
@@ -135,4 +135,4 @@ end
 
 local primes = P (from (2, 1))
 
-op.print_table (primes:take(500):totable ())
+op.print_table (primes:take(500):totable {})
