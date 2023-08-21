@@ -21,6 +21,7 @@ function op.precv_before (f, g)
 		return op.precv (op.identity, g) (...)
 	end 
 end
+function op.len(a) return #a end
 function op.add(a, b) return a + b end
 function op.add_l(a) return function (b) return a + b end end
 function op.add_r(b) return function (a) return a + b end end
@@ -82,6 +83,15 @@ function op.memoize (f)
 		return table.unpack (result_tbl)
 	end
 end
+
+function op.call_with_current_continuation (k, f)
+	return f (k, k)
+end
+
+function op.cps (f)
+	return function (k, ...) return k (k, f (...)) end
+end
+
 
 function op.with_elapsed_time_do (f, ...)
 
