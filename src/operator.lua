@@ -73,6 +73,14 @@ function op.assert_equals (expected, msg)
 end
 function op.assert_true (msg) return op.assert_equals (true, msg) end
 
+function op.table_insert (tbl)
+	tbl = tbl or {}
+	return function (v) 
+		table.insert (tbl, v)
+		return tbl
+	end
+end
+
 function op.memoize (f)
 	local computed, result_tbl = false, {}
 	return function (...)
@@ -94,14 +102,18 @@ end
 
 
 function op.with_elapsed_time_do (f, ...)
+	return op.wrapping_around (os.clock, f, function (_, start) return os.clock () - start end) (...)
+end
 
-	local start = os.clock ()
+function op.wrapping_around (before, current, after, ...)
 
-	local v = table.pack(f (...))
+	local before_res = op.o { table.pack, before } (...)
 
-	local elapsed = os.clock () - start
-
-	return elapsed, table.unpack (v)
+	return function (...)
+		local current_res = op.o { table.pack, current } (...)
+		local after_res = after (current_res, table.unpack (before_res))
+		return after_res, table.unpack (current_res)
+	end
 
 end
 
@@ -163,6 +175,33 @@ function op.add_trait (tbl, trait)
 end
 
 --------------------------------------------------------------------------------
+
+function coroutine.enumerate (co, f, ...)
+
+	local function g (succeed, ...)
+		
+		local returned_values = table.pack (...)
+		return succeed, returned_values
+		
+	end
+
+	local values = table.pack (...)
+
+	local i = 0
+	while true do
+		
+		local succeed, packedtbl = g (coroutine.resume (co, table.unpack (values)))
+		
+		if not succeed then return succeed, packedtbl[1] end
+		
+		if packedtbl.n == 0 then break end   -- all ok, just finished to enumerate the solution space.
+		
+		i = i + 1
+		values = table.pack (f (i, table.unpack (packedtbl)))
+	end
+
+	return true
+end
 
 function coroutine.const(f)
 
