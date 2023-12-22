@@ -92,6 +92,8 @@ function op.memoize (f)
 	end
 end
 
+function op.setfield (tbl) return function (k, v) tbl[k] = v end end
+
 function op.call_with_current_continuation (k, f)
 	return f (k, k)
 end
