@@ -94,12 +94,12 @@ end
 
 function op.setfield (tbl) return function (k, v) tbl[k] = v end end
 
-function op.call_with_current_continuation (k, f)
-	return f (k, k)
-end
-
-function op.cps (f)
-	return function (k, ...) return k (k, f (...)) end
+function op.callcc(f)
+    return function (k)
+		local co = coroutine.create(f)
+		local function R (flag, ...) if flag then return (k or op.identity) (...) else error (...) end end
+		return R (coroutine.resume(co, coroutine.yield))
+	end
 end
 
 
